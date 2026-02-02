@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parallel Video Processing Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffff00;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2e;
+            --grid-color: rgba(0, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark-bg);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridScroll 20s linear infinite;
+        }
+
+        @keyframes gridScroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glowing orb decorations */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--neon-cyan);
+            top: -200px;
+            right: -200px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--neon-magenta);
+            bottom: -150px;
+            left: -150px;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta), var(--neon-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            display: inline-block;
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255, 0, 255, 0.8)); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.2);
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group.full-width {
+            flex: 0 0 100%;
+        }
+
+        label {
+            display: block;
+            color: var(--neon-cyan);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #fff;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        /* File Upload Styling */
+        .file-upload-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px dashed rgba(0, 255, 255, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.05);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--neon-cyan);
+        }
+
+        .file-upload-text {
+            flex: 1;
+        }
+
+        .file-upload-text .primary {
+            display: block;
+            font-size: 1rem;
+            color: var(--neon-cyan);
+            margin-bottom: 5px;
+        }
+
+        .file-upload-text .secondary {
+            display: block;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .file-info-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-info-value {
+            color: var(--neon-cyan);
+            font-weight: 600;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            border: none;
+            color: #000;
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover:not(:disabled)::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Battle Arena */
+        .battle-arena {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .fighter {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fighter::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(135deg, transparent, var(--neon-cyan), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .fighter:hover::before {
+            opacity: 1;
+        }
+
+        .fighter.sequential {
+            border-color: rgba(255, 100, 100, 0.3);
+        }
+
+        .fighter.parallel {
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+
+        .fighter.winner {
+            transform: scale(1.05);
+            box-shadow: 0 20px 60px rgba(0, 255, 255, 0.5);
+            border-color: var(--neon-cyan);
+        }
+
+        .fighter.winner::before {
+            opacity: 1;
+            animation: borderGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fighter-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid;
+        }
+
+        .sequential .icon {
+            border-color: rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+        }
+
+        .parallel .icon {
+            border-color: rgba(0, 255, 255, 0.5);
+            color: var(--neon-cyan);
+        }
+
+        .fighter-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stats {
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .sequential .stat-value {
+            color: #ff6464;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            animation: fadeIn 1s ease-out 0.9s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .speedup-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-yellow), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            line-height: 1;
+            animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s both;
+        }
+
+        @keyframes scaleIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(-10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .efficiency-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+            border: 1px solid var(--neon-cyan);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Video Preview */
+        .video-outputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .video-container {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .video-container h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-cyan);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(255, 0, 255, 0.05));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+        }
+
+        /* Processing Animation */
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .processing-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 100px;
+            height: 100px;
+            border: 4px solid rgba(0, 255, 255, 0.1);
+            border-top: 4px solid var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            margin-top: 30px;
+            font-size: 1.3rem;
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .battle-arena,
+            .video-outputs {
+                grid-template-columns: 1fr;
+            }
+
+            .control-row {
+                flex-direction: column;
+            }
+
+            .control-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>⚡ Parallel Processing Arena ⚡</h1>
+            <p class="subtitle">Sequential vs Parallel • Battle of Performance</p>
+        </header>
+
+        <div class="control-panel">
+            <!-- File Upload Section -->
+            <div class="control-row">
+                <div class="control-group full-width">
+                    <label>📹 Upload Your Video</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="videoFile" accept="video/*" onchange="handleFileUpload(event)">
+                        <label for="videoFile" class="file-upload-label">
+                            <div class="file-upload-icon">📁</div>
+                            <div class="file-upload-text">
+                                <span class="primary">Click to upload video or drag & drop</span>
+                                <span class="secondary">Supports MP4, AVI, MOV, MKV • Max 500MB</span>
+                            </div>
+                        </label>
+                        <div class="file-info" id="fileInfo">
+                            <div class="file-info-item">
+                                <span class="file-info-label">File Name:</span>
+                                <span class="file-info-value" id="fileName">--</span>
+                            </div>
+                            <div class="file-info-item">
+                                <span class="file-info-label">File Size:</span>
+                                <span class="file-info-value" id="fileSize">--</span>
+                            </div>
+                            <div class="file-info-item">
+                                <span class="file-info-label">Detected Duration:</span>
+                                <span class="file-info-value" id="fileDuration">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="control-row">
+                <div class="control-group">
+                    <label>🎨 Filter Type</label>
+                    <select id="filterType">
+                        <option value="grayscale">Grayscale</option>
+                        <option value="blur" selected>Blur (Heavy)</option>
+                        <option value="complex">Complex (Multi-Filter)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>⏱️ Segment Duration (seconds)</label>
+                    <input type="number" id="segmentDuration" value="10" min="5" max="60" step="5" onchange="updateSegmentCount()">
+                </div>
+                <div class="control-group">
+                    <label>📦 Number of Segments</label>
+                    <input type="number" id="numSegments" value="6" readonly>
+                </div>
+            </div>
+
+            <!-- CPU Configuration -->
+            <div class="control-row">
+                <div class="control-group">
+                    <label>💻 CPU Cores Available</label>
+                    <input type="number" id="cpuCores" value="16" min="1" max="64">
+                </div>
+                <div class="control-group">
+                    <label>⚙️ Encoding Preset</label>
+                    <select id="encodingPreset">
+                        <option value="ultrafast">Ultrafast (Fastest)</option>
+                        <option value="fast">Fast</option>
+                        <option value="medium" selected>Medium (Recommended)</option>
+                        <option value="slow">Slow (Better Quality)</option>
+                        <option value="veryslow">Very Slow (Best Quality)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="control-row">
+                <button id="processBtn" onclick="startProcessing()" disabled>
+                    <span>🚀 START PROCESSING</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="battle-arena">
+            <div class="fighter sequential" id="sequentialFighter">
+                <div class="fighter-header">
+                    <div class="icon">⏳</div>
+                    <div class="fighter-title">Sequential</div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Processing Time</span>
+                        <span class="stat-value" id="seqTime">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Segments Processed</span>
+                        <span class="stat-value" id="seqSegments">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value" id="seqStatus">Waiting...</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="seqProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="fighter parallel" id="parallelFighter">
+                <div class="fighter-header">
+                    <div class="icon">⚡</div>
+                    <div class="fighter-title">Parallel</div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Processing Time</span>
+                        <span class="stat-value" id="parTime">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">CPU Cores Used</span>
+                        <span class="stat-value" id="parCores">16</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value" id="parStatus">Waiting...</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="parProgress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-panel" id="resultsPanel" style="display: none;">
+            <div class="results-content">
+                <h2 style="font-family: 'Orbitron', sans-serif; color: var(--neon-yellow); margin-bottom: 10px;">
+                    🏆 PERFORMANCE RESULTS
+                </h2>
+                <div class="speedup-display" id="speedupValue">--</div>
+                <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 15px;">
+                    <span id="timeSaved">--</span> saved with parallel processing
+                </p>
+                <div class="efficiency-badge">
+                    Parallel Efficiency: <strong id="efficiency">--</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-outputs" id="videoOutputs" style="display: none;">
+            <div class="video-container">
+                <h3>📹 Sequential Output</h3>
+                <div class="video-placeholder">Video preview will appear here</div>
+            </div>
+            <div class="video-container">
+                <h3>⚡ Parallel Output</h3>
+                <div class="video-placeholder">Video preview will appear here</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="processing-overlay" id="processingOverlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <div class="processing-text" id="processingText">Processing Video...</div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedVideo = null;
+        let videoDuration = 0;
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            uploadedVideo = file;
+
+            // Display file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileInfo').classList.add('active');
+
+            // Get video duration
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            
+            video.onloadedmetadata = function() {
+                window.URL.revokeObjectURL(video.src);
+                videoDuration = Math.floor(video.duration);
+                document.getElementById('fileDuration').textContent = formatDuration(videoDuration);
+                updateSegmentCount();
+                
+                // Enable process button
+                document.getElementById('processBtn').disabled = false;
+            }
+
+            video.src = URL.createObjectURL(file);
+        }
+
+        // Update segment count based on duration and segment size
+        function updateSegmentCount() {
+            const segmentDuration = parseInt(document.getElementById('segmentDuration').value);
+            if (videoDuration > 0) {
+                const segments = Math.ceil(videoDuration / segmentDuration);
+                document.getElementById('numSegments').value = segments;
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // Format duration
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        }
+
+        // Start processing
+        function startProcessing() {
+            if (!uploadedVideo) {
+                alert('Please upload a video first!');
+                return;
+            }
+
+            const filterType = document.getElementById('filterType').value;
+            const segmentDuration = parseInt(document.getElementById('segmentDuration').value);
+            const segments = parseInt(document.getElementById('numSegments').value);
+            const cpuCores = parseInt(document.getElementById('cpuCores').value);
+            const encodingPreset = document.getElementById('encodingPreset').value;
+
+            // Update CPU cores display
+            document.getElementById('parCores').textContent = cpuCores;
+
+            // Show processing overlay
+            document.getElementById('processingOverlay').classList.add('active');
+            document.getElementById('processingText').textContent = 'Analyzing video...';
+            
+            // Reset fighters
+            document.getElementById('sequentialFighter').classList.remove('winner');
+            document.getElementById('parallelFighter').classList.remove('winner');
+            document.getElementById('resultsPanel').style.display = 'none';
+            document.getElementById('videoOutputs').style.display = 'none';
+
+            // Calculate processing times based on preset
+            const presetMultipliers = {
+                'ultrafast': 1,
+                'fast': 2,
+                'medium': 3,
+                'slow': 5,
+                'veryslow': 8
+            };
+
+            const filterMultipliers = {
+                'grayscale': 1,
+                'blur': 1.5,
+                'complex': 2.5
+            };
+
+            const baseTimePerSegment = 2; // base seconds per segment
+            const timePerSegment = baseTimePerSegment * 
+                                   presetMultipliers[encodingPreset] * 
+                                   filterMultipliers[filterType];
+
+            const seqTotal = timePerSegment * segments;
+            const parTotal = timePerSegment * Math.ceil(segments / cpuCores);
+            const speedup = seqTotal / parTotal;
+            const efficiency = (speedup / cpuCores) * 100;
+            const timeSaved = seqTotal - parTotal;
+
+            setTimeout(() => {
+                document.getElementById('processingOverlay').classList.remove('active');
+                
+                // Sequential processing animation
+                animateProcessing('sequential', seqTotal, segments, () => {
+                    // Parallel processing animation
+                    animateProcessing('parallel', parTotal, segments, () => {
+                        // Show results
+                        showResults(speedup, efficiency, timeSaved, seqTotal, parTotal);
+                    });
+                });
+            }, 1500);
+        }
+
+        function animateProcessing(type, totalTime, segments, callback) {
+            const timeEl = document.getElementById(type === 'sequential' ? 'seqTime' : 'parTime');
+            const statusEl = document.getElementById(type === 'sequential' ? 'seqStatus' : 'parStatus');
+            const progressEl = document.getElementById(type === 'sequential' ? 'seqProgress' : 'parProgress');
+            const segmentsEl = document.getElementById('seqSegments');
+
+            statusEl.textContent = 'Processing...';
+            statusEl.style.color = 'var(--neon-yellow)';
+
+            let progress = 0;
+            const steps = 100;
+            const stepTime = (totalTime * 1000) / steps;
+            let currentSegment = 0;
+
+            const interval = setInterval(() => {
+                progress += 100 / steps;
+                progressEl.style.width = Math.min(progress, 100) + '%';
+                timeEl.textContent = (totalTime * (progress / 100)).toFixed(1) + 's';
+
+                // Update segment counter for sequential
+                if (type === 'sequential') {
+                    const newSegment = Math.floor((progress / 100) * segments);
+                    if (newSegment > currentSegment) {
+                        currentSegment = newSegment;
+                        segmentsEl.textContent = currentSegment;
+                    }
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    statusEl.textContent = 'Complete ✓';
+                    statusEl.style.color = 'var(--neon-cyan)';
+                    timeEl.textContent = totalTime.toFixed(1) + 's';
+                    if (type === 'sequential') {
+                        segmentsEl.textContent = segments;
+                    }
+                    if (callback) callback();
+                }
+            }, stepTime);
+        }
+
+        function showResults(speedup, efficiency, timeSaved, seqTime, parTime) {
+            // Mark winner
+            document.getElementById('parallelFighter').classList.add('winner');
+
+            // Show results panel
+            const resultsPanel = document.getElementById('resultsPanel');
+            resultsPanel.style.display = 'block';
+
+            document.getElementById('speedupValue').textContent = speedup.toFixed(2) + 'x';
+            document.getElementById('timeSaved').textContent = formatDuration(Math.floor(timeSaved));
+            document.getElementById('efficiency').textContent = efficiency.toFixed(1) + '%';
+
+            // Show video outputs
+            setTimeout(() => {
+                document.getElementById('videoOutputs').style.display = 'grid';
+            }, 500);
+        }
+
+        // Drag and drop support
+        const fileLabel = document.querySelector('.file-upload-label');
+        
+        fileLabel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileLabel.style.borderColor = 'var(--neon-cyan)';
+            fileLabel.style.background = 'rgba(0, 255, 255, 0.1)';
+        });
+
+        fileLabel.addEventListener('dragleave', () => {
+            fileLabel.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+            fileLabel.style.background = 'rgba(0, 0, 0, 0.5)';
+        });
+
+        fileLabel.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileLabel.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+            fileLabel.style.background = 'rgba(0, 0, 0, 0.5)';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('video/')) {
+                document.getElementById('videoFile').files = e.dataTransfer.files;
+                handleFileUpload({ target: { files: [file] } });
+            }
+        });
+    </script>
+</body>
+</html>
